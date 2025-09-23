@@ -315,6 +315,122 @@ function initYearDisplay() {
   }
 }
 
+// Projects carousel functionality
+function initProjectsCarousel() {
+  const track = document.getElementById('carouselTrack');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const indicators = document.getElementById('carouselIndicators');
+  
+  if (!track || !prevBtn || !nextBtn || !indicators) {
+    console.log('Carousel elements not found');
+    return;
+  }
+  
+  const projects = track.querySelectorAll('.project');
+  const totalProjects = projects.length;
+  let currentIndex = 0;
+  
+  // Create indicators
+  for (let i = 0; i < totalProjects; i++) {
+    const indicator = document.createElement('button');
+    indicator.setAttribute('role', 'tab');
+    indicator.setAttribute('aria-label', `Go to project ${i + 1}`);
+    indicator.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+    indicator.classList.add('indicator');
+    if (i === 0) indicator.classList.add('active');
+    indicator.addEventListener('click', () => goToSlide(i));
+    indicators.appendChild(indicator);
+  }
+  
+  function updateCarousel() {
+    const translateX = -currentIndex * 100;
+    track.style.transform = `translateX(${translateX}%)`;
+    
+    // Update indicators
+    indicators.querySelectorAll('.indicator').forEach((indicator, index) => {
+      indicator.classList.toggle('active', index === currentIndex);
+      indicator.setAttribute('aria-selected', index === currentIndex);
+    });
+    
+    // Update button states
+    prevBtn.disabled = currentIndex === 0;
+    nextBtn.disabled = currentIndex === totalProjects - 1;
+  }
+  
+  function goToSlide(index) {
+    currentIndex = Math.max(0, Math.min(index, totalProjects - 1));
+    updateCarousel();
+  }
+  
+  function nextSlide() {
+    if (currentIndex < totalProjects - 1) {
+      currentIndex++;
+      updateCarousel();
+    }
+  }
+  
+  function prevSlide() {
+    if (currentIndex > 0) {
+      currentIndex--;
+      updateCarousel();
+    }
+  }
+  
+  // Event listeners
+  nextBtn.addEventListener('click', nextSlide);
+  prevBtn.addEventListener('click', prevSlide);
+  
+  // Touch/swipe support for mobile
+  let startX = 0;
+  let startY = 0;
+  let isDragging = false;
+  
+  track.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    isDragging = true;
+  });
+  
+  track.addEventListener('touchmove', (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+  });
+  
+  track.addEventListener('touchend', (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+    
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    const diffX = startX - endX;
+    const diffY = startY - endY;
+    
+    // Only handle horizontal swipes
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+      if (diffX > 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+    }
+  });
+  
+  // Keyboard navigation
+  track.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      prevSlide();
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      nextSlide();
+    }
+  });
+  
+  // Initialize
+  updateCarousel();
+}
+
 // Main initialization
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM Content Loaded - Initializing...');
@@ -330,6 +446,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initYearDisplay();
   initNavigation();
   initMobileNavigation();
+  initProjectsCarousel();
   
   console.log('All initialization complete');
   
