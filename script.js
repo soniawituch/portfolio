@@ -38,16 +38,9 @@ function initNavigation() {
       console.log('Main nav link clicked:', this.href);
       console.log('Screen width:', window.innerWidth);
       
-      // Check if this is the CTA button on mobile
+      // Skip CTA button on mobile - let dedicated handler manage it
       if (this.getAttribute('href') === '#contact' && window.innerWidth < 900) {
-        console.log('CTA button on mobile - using mobile handler');
-        // Let the mobile handler take care of this
-        return;
-      }
-      
-      // Check if this is the CTA button on desktop - skip it entirely
-      if (this.getAttribute('href') === '#contact' && window.innerWidth >= 900) {
-        console.log('CTA button on desktop - skipping main nav handler');
+        console.log('CTA button on mobile - skipping main nav handler');
         return;
       }
       
@@ -239,15 +232,26 @@ function initMobileNavigation() {
     }
   });
   
-  // Handle the "Let's build something amazing" button on mobile
+}
+
+// Initialize year display
+function initYearDisplay() {
+  const yearEl = document.getElementById('year');
+  if (yearEl) {
+    yearEl.textContent = new Date().getFullYear();
+  }
+}
+
+// Handle the "Let's build something amazing" button
+function initCTAButton() {
   const ctaButton = document.querySelector('a[href="#contact"]');
   console.log('CTA button found:', !!ctaButton);
   if (ctaButton) {
     ctaButton.addEventListener('click', function(e) {
-      console.log('CTA button clicked! Screen width:', window.innerWidth);
-      // Check if we're on mobile (screen width < 900px)
+      console.log('DEDICATED CTA button clicked! Screen width:', window.innerWidth);
+      // Only handle on mobile
       if (window.innerWidth < 900) {
-        console.log('Mobile CTA button handler triggered');
+        console.log('DEDICATED Mobile CTA button handler triggered');
         e.preventDefault();
         e.stopPropagation();
         
@@ -264,12 +268,12 @@ function initMobileNavigation() {
           // Add highlight to target section header
           if (sectionHeader) {
             sectionHeader.classList.add('section-highlight');
+            console.log('Mobile: Section highlight added to', sectionHeader.textContent);
           }
           
-          // Scroll to target with mobile-optimized methods
+          // Mobile-optimized scroll
           const targetPosition = target.offsetTop - 80;
           
-          // Method 1: Smooth scroll
           try {
             window.scrollTo({
               top: targetPosition,
@@ -279,39 +283,22 @@ function initMobileNavigation() {
             window.scrollTo(0, targetPosition);
           }
           
-          // Method 2: Force scroll as backup
+          // Force scroll as backup
           setTimeout(() => {
             document.documentElement.scrollTop = targetPosition;
             document.body.scrollTop = targetPosition;
           }, 50);
           
-          // Method 3: CSS override for stubborn cases
-          setTimeout(() => {
-            document.documentElement.style.overflow = 'auto';
-            document.documentElement.style.overflowY = 'auto';
-            document.body.style.overflow = 'auto';
-            document.body.style.overflowY = 'auto';
-            document.documentElement.scrollTop = targetPosition;
-            document.body.scrollTop = targetPosition;
-          }, 100);
-          
           // Remove highlight after animation
           setTimeout(() => {
             if (sectionHeader) {
               sectionHeader.classList.remove('section-highlight');
+              console.log('Mobile: Section highlight removed from', sectionHeader.textContent);
             }
           }, 3000);
         }
       }
     });
-  }
-}
-
-// Initialize year display
-function initYearDisplay() {
-  const yearEl = document.getElementById('year');
-  if (yearEl) {
-    yearEl.textContent = new Date().getFullYear();
   }
 }
 
@@ -385,17 +372,26 @@ function initProjectsCarousel() {
   let startX = 0;
   let startY = 0;
   let isDragging = false;
+  let currentX = 0;
   
   track.addEventListener('touchstart', (e) => {
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
+    currentX = startX;
     isDragging = true;
-  });
+    track.style.transition = 'none';
+  }, { passive: true });
   
   track.addEventListener('touchmove', (e) => {
     if (!isDragging) return;
-    e.preventDefault();
-  });
+    
+    currentX = e.touches[0].clientX;
+    const diffX = startX - currentX;
+    const translateX = -currentIndex * 100 + (diffX / track.offsetWidth) * 100;
+    
+    // Apply the drag effect
+    track.style.transform = `translateX(${translateX}%)`;
+  }, { passive: true });
   
   track.addEventListener('touchend', (e) => {
     if (!isDragging) return;
@@ -406,6 +402,9 @@ function initProjectsCarousel() {
     const diffX = startX - endX;
     const diffY = startY - endY;
     
+    // Restore transition
+    track.style.transition = 'transform 0.3s ease';
+    
     // Only handle horizontal swipes
     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
       if (diffX > 0) {
@@ -413,8 +412,11 @@ function initProjectsCarousel() {
       } else {
         prevSlide();
       }
+    } else {
+      // Snap back to current position
+      updateCarousel();
     }
-  });
+  }, { passive: true });
   
   // Keyboard navigation
   track.addEventListener('keydown', (e) => {
@@ -447,6 +449,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initNavigation();
   initMobileNavigation();
   initProjectsCarousel();
+  initCTAButton();
   
   console.log('All initialization complete');
   
@@ -458,9 +461,31 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// Force page to start at top on load
-window.addEventListener('beforeunload', function() {
-  window.scrollTo(0, 0);
+// Force page to start at top on load/refresh
+window.addEventListener('load', function() {
+  // Use setTimeout to ensure this runs after all other scripts
+  setTimeout(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, 0);
 });
+
+// Also ensure page starts at top on initial load
+document.addEventListener('DOMContentLoaded', function() {
+  // Use setTimeout to ensure this runs after all other scripts
+  setTimeout(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, 0);
+});
+
+// Force scroll to top immediately when page loads
+setTimeout(() => {
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+}, 0);
 
 // Cache buster: Wed Sep 24 00:33:36 CEST 2025
