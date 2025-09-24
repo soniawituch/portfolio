@@ -39,8 +39,38 @@ function initNavigation() {
       console.log('Screen width:', window.innerWidth);
       
       // Skip CTA button on mobile - let dedicated handler manage it
-      if (this.getAttribute('href') === '#contact' && window.innerWidth < 900) {
+      if (this.getAttribute('href') === '#contact' && window.innerWidth < 900 && this.textContent.includes('Let\'s build')) {
         console.log('CTA button on mobile - skipping main nav handler');
+        e.preventDefault();
+        e.stopPropagation();
+        // Manually trigger the CTA handler
+        const target = document.getElementById('contact');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+          // Find the h2 header within the target section
+          const sectionHeader = target.querySelector('h2');
+          if (sectionHeader) {
+            sectionHeader.classList.add('section-highlight');
+            sectionHeader.style.background = 'var(--primary)';
+            sectionHeader.style.color = 'var(--primary-contrast)';
+            sectionHeader.style.padding = '8px 16px';
+            sectionHeader.style.borderRadius = '8px';
+            sectionHeader.style.transition = 'all 0.3s ease';
+            console.log('Mobile: Section highlight added to', sectionHeader.textContent);
+            // Remove highlight after 5 seconds
+            setTimeout(() => {
+              if (sectionHeader) {
+                sectionHeader.classList.remove('section-highlight');
+                sectionHeader.style.background = '';
+                sectionHeader.style.color = '';
+                sectionHeader.style.padding = '';
+                sectionHeader.style.borderRadius = '';
+                sectionHeader.style.transition = '';
+                console.log('Mobile: Section highlight removed from', sectionHeader.textContent);
+              }
+            }, 5000);
+          }
+        }
         return;
       }
       
@@ -110,20 +140,38 @@ function initNavigation() {
 // Mobile navigation functionality
 function initMobileNavigation() {
   const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+  const mobileMenuClose = document.getElementById('mobileMenuClose');
   const siteNav = document.querySelector('.site-nav');
   
   if (!mobileMenuToggle || !siteNav) {
     return;
   }
   
-  mobileMenuToggle.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
+  function toggleMenu(show) {
+    const isExpanded = show !== undefined ? show : mobileMenuToggle.getAttribute('aria-expanded') === 'true';
     
-    const isExpanded = this.getAttribute('aria-expanded') === 'true';
-    this.setAttribute('aria-expanded', !isExpanded);
-    siteNav.classList.toggle('active');
+    console.log('Toggle menu called, isExpanded:', isExpanded);
+    console.log('Mobile menu close button exists:', !!mobileMenuClose);
     
+    mobileMenuToggle.setAttribute('aria-expanded', !isExpanded);
+    siteNav.classList.toggle('active', !isExpanded);
+    
+    // Toggle button visibility using classes
+    if (!isExpanded) {
+      mobileMenuToggle.style.display = 'none';
+      if (mobileMenuClose) {
+        mobileMenuClose.style.display = 'block';
+        mobileMenuClose.classList.add('show');
+        console.log('Showing close button');
+      }
+    } else {
+      mobileMenuToggle.style.display = 'block';
+      if (mobileMenuClose) {
+        mobileMenuClose.style.display = 'none';
+        mobileMenuClose.classList.remove('show');
+        console.log('Hiding close button');
+      }
+    }
     
     // Prevent body scroll when menu is open
     if (!isExpanded) {
@@ -135,7 +183,33 @@ function initMobileNavigation() {
       document.documentElement.style.overflow = '';
       document.documentElement.style.overflowY = '';
     }
+  }
+  
+  mobileMenuToggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Mobile menu toggle clicked');
+    toggleMenu();
   });
+  
+  // Close button functionality
+  if (mobileMenuClose) {
+    mobileMenuClose.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('Close button clicked - closing menu');
+      // Force close the menu
+      mobileMenuToggle.setAttribute('aria-expanded', 'false');
+      siteNav.classList.remove('active');
+      mobileMenuToggle.style.display = 'block';
+      mobileMenuClose.style.display = 'none';
+      mobileMenuClose.classList.remove('show');
+      document.body.style.overflow = '';
+      document.body.style.overflowY = '';
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.overflowY = '';
+    });
+  }
   
   // Handle mobile navigation links directly
   const navLinks = siteNav.querySelectorAll('a');
@@ -195,8 +269,14 @@ function initMobileNavigation() {
           
           // Close mobile menu after a short delay
           setTimeout(() => {
+            console.log('Closing mobile menu after nav link click');
             mobileMenuToggle.setAttribute('aria-expanded', 'false');
             siteNav.classList.remove('active');
+            mobileMenuToggle.style.display = 'block';
+            if (mobileMenuClose) {
+              mobileMenuClose.style.display = 'none';
+              mobileMenuClose.classList.remove('show');
+            }
             document.body.style.overflow = '';
             document.body.style.overflowY = '';
             document.documentElement.style.overflow = '';
@@ -214,21 +294,20 @@ function initMobileNavigation() {
     });
   });
   
-  // Close menu when clicking outside
+  // Close menu when clicking outside (only if menu is open)
   document.addEventListener('click', function(e) {
-    if (!siteNav.contains(e.target) && !mobileMenuToggle.contains(e.target)) {
-      mobileMenuToggle.setAttribute('aria-expanded', 'false');
-      siteNav.classList.remove('active');
-      document.body.style.overflow = '';
+    if (siteNav.classList.contains('active') && 
+        !siteNav.contains(e.target) && 
+        !mobileMenuToggle.contains(e.target) && 
+        !mobileMenuClose.contains(e.target)) {
+      toggleMenu(false);
     }
   });
   
   // Close menu on escape key
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-      mobileMenuToggle.setAttribute('aria-expanded', 'false');
-      siteNav.classList.remove('active');
-      document.body.style.overflow = '';
+      toggleMenu(false);
     }
   });
   
@@ -249,6 +328,7 @@ function initCTAButton() {
   if (ctaButton) {
     ctaButton.addEventListener('click', function(e) {
       console.log('DEDICATED CTA button clicked! Screen width:', window.innerWidth);
+      console.log('CTA button text:', this.textContent);
       // Only handle on mobile
       if (window.innerWidth < 900) {
         console.log('DEDICATED Mobile CTA button handler triggered');
@@ -256,9 +336,12 @@ function initCTAButton() {
         e.stopPropagation();
         
         const target = document.getElementById('contact');
+        console.log('Mobile CTA: Target element found:', !!target);
         if (target) {
           // Find the h2 header within the target section
           const sectionHeader = target.querySelector('h2');
+          console.log('Mobile CTA: Section header found:', !!sectionHeader);
+          console.log('Mobile CTA: Section header text:', sectionHeader ? sectionHeader.textContent : 'none');
           
           // Remove highlight from all section headers
           document.querySelectorAll('section h2').forEach(header => {
@@ -268,7 +351,14 @@ function initCTAButton() {
           // Add highlight to target section header
           if (sectionHeader) {
             sectionHeader.classList.add('section-highlight');
+            sectionHeader.style.background = 'var(--primary)';
+            sectionHeader.style.color = 'var(--primary-contrast)';
+            sectionHeader.style.padding = '8px 16px';
+            sectionHeader.style.borderRadius = '8px';
+            sectionHeader.style.transition = 'all 0.3s ease';
             console.log('Mobile: Section highlight added to', sectionHeader.textContent);
+            console.log('Mobile: Section header element:', sectionHeader);
+            console.log('Mobile: Section header classes:', sectionHeader.classList.toString());
           }
           
           // Mobile-optimized scroll
@@ -295,7 +385,7 @@ function initCTAButton() {
               sectionHeader.classList.remove('section-highlight');
               console.log('Mobile: Section highlight removed from', sectionHeader.textContent);
             }
-          }, 3000);
+          }, 5000);
         }
       }
     });
@@ -318,6 +408,7 @@ function initProjectsCarousel() {
   const totalProjects = projects.length;
   let currentIndex = 0;
   
+  
   // Create indicators
   for (let i = 0; i < totalProjects; i++) {
     const indicator = document.createElement('button');
@@ -326,7 +417,13 @@ function initProjectsCarousel() {
     indicator.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
     indicator.classList.add('indicator');
     if (i === 0) indicator.classList.add('active');
-    indicator.addEventListener('click', () => goToSlide(i));
+    indicator.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      console.log('Indicator clicked:', i);
+      goToSlide(i);
+    });
     indicators.appendChild(indicator);
   }
   
@@ -340,9 +437,9 @@ function initProjectsCarousel() {
       indicator.setAttribute('aria-selected', index === currentIndex);
     });
     
-    // Update button states
-    prevBtn.disabled = currentIndex === 0;
-    nextBtn.disabled = currentIndex === totalProjects - 1;
+    // Buttons are always enabled for infinite loop
+    prevBtn.disabled = false;
+    nextBtn.disabled = false;
   }
   
   function goToSlide(index) {
@@ -351,72 +448,79 @@ function initProjectsCarousel() {
   }
   
   function nextSlide() {
-    if (currentIndex < totalProjects - 1) {
-      currentIndex++;
-      updateCarousel();
-    }
+    console.log('nextSlide called, currentIndex:', currentIndex, 'totalProjects:', totalProjects);
+    currentIndex = (currentIndex + 1) % totalProjects; // Loop back to 0 when reaching the end
+    updateCarousel();
   }
   
   function prevSlide() {
-    if (currentIndex > 0) {
-      currentIndex--;
-      updateCarousel();
-    }
+    console.log('prevSlide called, currentIndex:', currentIndex);
+    currentIndex = currentIndex === 0 ? totalProjects - 1 : currentIndex - 1; // Go to last slide when at 0
+    updateCarousel();
   }
   
   // Event listeners
-  nextBtn.addEventListener('click', nextSlide);
-  prevBtn.addEventListener('click', prevSlide);
+  nextBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    nextSlide();
+  });
   
-  // Touch/swipe support for mobile
+  prevBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    console.log('Prev button clicked');
+    prevSlide();
+  });
+  
+  // Simple touch swipe support - just like arrow buttons
   let startX = 0;
   let startY = 0;
-  let isDragging = false;
-  let currentX = 0;
-  
-  track.addEventListener('touchstart', (e) => {
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-    currentX = startX;
-    isDragging = true;
-    track.style.transition = 'none';
-  }, { passive: true });
-  
-  track.addEventListener('touchmove', (e) => {
-    if (!isDragging) return;
-    
-    currentX = e.touches[0].clientX;
-    const diffX = startX - currentX;
-    const translateX = -currentIndex * 100 + (diffX / track.offsetWidth) * 100;
-    
-    // Apply the drag effect
-    track.style.transform = `translateX(${translateX}%)`;
-  }, { passive: true });
-  
-  track.addEventListener('touchend', (e) => {
-    if (!isDragging) return;
-    isDragging = false;
-    
-    const endX = e.changedTouches[0].clientX;
-    const endY = e.changedTouches[0].clientY;
-    const diffX = startX - endX;
-    const diffY = startY - endY;
-    
-    // Restore transition
-    track.style.transition = 'transform 0.3s ease';
-    
-    // Only handle horizontal swipes
-    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
-      if (diffX > 0) {
-        nextSlide();
-      } else {
-        prevSlide();
+
+  function addSwipeListeners(element) {
+    element.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    element.addEventListener('touchend', (e) => {
+      if (!startX || !startY) return;
+      
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      
+      const diffX = startX - endX;
+      const diffY = Math.abs(startY - endY);
+      
+      // Only trigger if horizontal movement is greater than vertical (prevents accidental swipes)
+      if (Math.abs(diffX) > diffY && Math.abs(diffX) > 50) {
+        if (diffX > 0) {
+          // Swipe right - next slide (like right arrow)
+          nextSlide();
+        } else if (diffX < 0) {
+          // Swipe left - previous slide (like left arrow)
+          prevSlide();
+        }
       }
-    } else {
-      // Snap back to current position
-      updateCarousel();
-    }
-  }, { passive: true });
+      
+      // Reset values
+      startX = 0;
+      startY = 0;
+    }, { passive: true });
+  }
+
+  // Add swipe listeners to the track
+  addSwipeListeners(track);
+
+  // Add swipe listeners to each project card
+  function addSwipeToProjects() {
+    const projectCards = track.querySelectorAll('.project');
+    projectCards.forEach((card) => {
+      addSwipeListeners(card);
+    });
+  }
   
   // Keyboard navigation
   track.addEventListener('keydown', (e) => {
@@ -431,6 +535,7 @@ function initProjectsCarousel() {
   
   // Initialize
   updateCarousel();
+  addSwipeToProjects();
 }
 
 // Main initialization
@@ -488,4 +593,5 @@ setTimeout(() => {
   document.body.scrollTop = 0;
 }, 0);
 
-// Cache buster: Wed Sep 24 00:33:36 CEST 2025
+// Cache buster: Wed Sep 24 10:10:00 CEST 2025
+
