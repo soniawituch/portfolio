@@ -538,6 +538,97 @@ function initProjectsCarousel() {
   addSwipeToProjects();
 }
 
+// Experience section functionality
+function initExperienceSection() {
+  // Handle experience toggle clicks
+  const experienceToggles = document.querySelectorAll('.experience-toggle');
+  console.log('Found experience toggles:', experienceToggles.length);
+  
+  experienceToggles.forEach((toggle, index) => {
+    console.log(`Setting up toggle ${index}:`, toggle.textContent.trim());
+    toggle.addEventListener('click', function() {
+      console.log('Experience toggle clicked:', this.textContent.trim());
+      
+      // Find the parent article, then look for experience-details within it
+      const article = this.closest('article');
+      const details = article ? article.querySelector('.experience-details') : null;
+      console.log('Article:', article);
+      console.log('Details element:', details);
+      
+      if (details && details.classList.contains('experience-details')) {
+        const isExpanded = details.classList.contains('show');
+        console.log('Is expanded:', isExpanded);
+        
+        if (isExpanded) {
+          details.classList.remove('show');
+          this.classList.remove('expanded');
+          console.log('Collapsed details');
+        } else {
+          details.classList.add('show');
+          this.classList.add('expanded');
+          console.log('Expanded details');
+        }
+      } else {
+        console.log('Details element not found or wrong class');
+      }
+    });
+  });
+
+  // Handle show more/less experience button
+  const showMoreBtn = document.getElementById('showMoreBtn');
+  const hiddenExperiences = document.querySelectorAll('.hidden-experiences');
+  
+  if (showMoreBtn && hiddenExperiences.length > 0) {
+    let isExpanded = false;
+    
+    showMoreBtn.addEventListener('click', function() {
+      const btnText = this.querySelector('.btn-text');
+      const btnIcon = this.querySelector('.btn-icon');
+      
+      if (!isExpanded) {
+        // Show more experiences
+        hiddenExperiences.forEach((experience, index) => {
+          // Add smooth animation by staggering the reveals
+          setTimeout(() => {
+            experience.classList.add('show');
+            experience.style.display = 'block';
+          }, index * 100); // Stagger by 100ms each
+        });
+        
+        // Update button
+        btnText.textContent = 'Show less experience';
+        btnIcon.textContent = '↑';
+        this.setAttribute('aria-expanded', 'true');
+        isExpanded = true;
+        
+      } else {
+        // Show less experiences - scroll to first experience
+        const firstExperience = document.querySelector('.experience .item:not(.hidden-experiences):first-of-type');
+        if (firstExperience) {
+          firstExperience.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }
+        
+        // Hide experiences after a short delay to allow scroll
+        setTimeout(() => {
+          hiddenExperiences.forEach((experience) => {
+            experience.classList.remove('show');
+            experience.style.display = 'none';
+          });
+          
+          // Update button
+          btnText.textContent = 'Show more experience';
+          btnIcon.textContent = '↓';
+          this.setAttribute('aria-expanded', 'false');
+          isExpanded = false;
+        }, 500);
+      }
+    });
+  }
+}
+
 // Main initialization
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM Content Loaded - Initializing...');
@@ -555,6 +646,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initMobileNavigation();
   initProjectsCarousel();
   initCTAButton();
+  initExperienceSection();
   
   console.log('All initialization complete');
   
