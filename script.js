@@ -629,6 +629,71 @@ function initExperienceSection() {
   }
 }
 
+// LinkedIn Feed functionality
+function initLinkedInFeed() {
+  const widgetContainer = document.querySelector('.linkedin-widget-container');
+  
+  if (!widgetContainer) {
+    console.log('LinkedIn feed container not found');
+    return;
+  }
+  
+  // Add loaded class to container since we're using Elfsight widget
+  widgetContainer.classList.add('loaded');
+  
+  console.log('LinkedIn feed initialized with Elfsight widget');
+}
+
+// Function to load actual LinkedIn widget (call this when you have the embed code)
+function loadLinkedInWidget(embedCode) {
+  const embedContainer = document.getElementById('linkedinWidgetEmbed');
+  const widgetContainer = document.querySelector('.linkedin-widget-container');
+  const placeholder = document.getElementById('linkedinFeedPlaceholder');
+  
+  if (!embedContainer || !widgetContainer) {
+    console.log('LinkedIn feed elements not found');
+    return;
+  }
+  
+  // Insert the embed code
+  embedContainer.innerHTML = embedCode;
+  embedContainer.style.display = 'block';
+  
+  // Update container classes
+  widgetContainer.classList.remove('loading');
+  widgetContainer.classList.add('loaded');
+  
+  // Hide placeholder
+  setTimeout(() => {
+    if (placeholder) {
+      placeholder.style.display = 'none';
+    }
+  }, 500);
+}
+
+// Function to handle widget loading errors
+function handleLinkedInWidgetError() {
+  const placeholder = document.getElementById('linkedinFeedPlaceholder');
+  const widgetContainer = document.querySelector('.linkedin-widget-container');
+  
+  if (!placeholder || !widgetContainer) {
+    return;
+  }
+  
+  const placeholderContent = placeholder.querySelector('.placeholder-content');
+  if (placeholderContent) {
+    placeholderContent.innerHTML = `
+      <div class="placeholder-icon">⚠️</div>
+      <h3>Unable to Load Feed</h3>
+      <p>There was an issue loading my LinkedIn feed. Please visit my LinkedIn profile directly to see my latest posts and insights.</p>
+      <a class="btn btn-primary" href="https://www.linkedin.com/in/sonia-wituch/" target="_blank" rel="noreferrer" style="margin-top: 20px; display: inline-block;">🤝 Visit LinkedIn Profile</a>
+    `;
+  }
+  
+  widgetContainer.classList.remove('loading');
+  widgetContainer.classList.add('loaded');
+}
+
 // Main initialization
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM Content Loaded - Initializing...');
@@ -647,6 +712,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initProjectsCarousel();
   initCTAButton();
   initExperienceSection();
+  initLinkedInFeed();
   
   console.log('All initialization complete');
   
