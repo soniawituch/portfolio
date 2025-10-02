@@ -202,7 +202,7 @@ body {
 .cta-row {
   display: flex;
   gap: 12px;
-  margin: 20px 0 0;
+  margin: 24px 0 0;
 }
 
 .contact-note {
@@ -1293,7 +1293,7 @@ body {
   .cta-row {
     flex-direction: column;
     gap: 12px;
-    margin: 24px 0 0;
+    margin: 28px 0 0;
   }
   
   .btn {
@@ -2920,15 +2920,19 @@ img {
 }
 
 .linkedin-intro a {
-  color: var(--primary);
+  color: var(--primary) !important;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
 }
 
 .linkedin-intro a:hover {
-  color: var(--primary-dark);
+  color: var(--primary-dark) !important;
   text-decoration: underline;
+}
+
+.linkedin-intro a:visited {
+  color: var(--primary) !important;
 }
 
 .linkedin-widget-container {
@@ -2939,6 +2943,7 @@ img {
   background: var(--card);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
+  margin-top: 24px;
 }
 
 .linkedin-feed-placeholder {
